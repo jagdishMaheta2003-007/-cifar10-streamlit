@@ -1,36 +1,28 @@
 import streamlit as st
 import numpy as np
-import cv2
 import tensorflow as tf
 from PIL import Image
-
-# ---------------------------------------------------------
-# CIFAR-10 Image Classifier — Streamlit App
-# ---------------------------------------------------------
 
 CLASS_NAMES = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
 
-MODEL_PATH = "cifar10_model.h5"  # exported from your Colab notebook
+MODEL_PATH = "cifar10_model.h5"
 
 
 @st.cache_resource
 def load_model():
-    """Load the trained CIFAR-10 model once and cache it."""
     return tf.keras.models.load_model(MODEL_PATH)
 
 
-def preprocess_image(pil_image: Image.Image) -> np.ndarray:
-    """Convert an uploaded PIL image into the (1, 32, 32, 3) array the model expects."""
-    img = np.array(pil_image.convert("RGB"))
-    img = cv2.resize(img, (32, 32))
+def preprocess_image(pil_image: Image.Image):
+    resized = pil_image.convert("RGB").resize((32, 32))
+    img = np.array(resized)
     img_norm = img / 255.0
     return img_norm.reshape(1, 32, 32, 3), img
 
 
 def main():
     st.set_page_config(page_title="CIFAR-10 Classifier", page_icon="🖼️", layout="centered")
-
     st.title("🖼️ CIFAR-10 Image Classifier")
     st.write(
         "Upload an image and the model will predict which of the 10 CIFAR-10 "
@@ -40,10 +32,7 @@ def main():
     try:
         model = load_model()
     except Exception as e:
-        st.error(
-            f"Could not load '{MODEL_PATH}'. Make sure the trained model file "
-            f"is in the same folder as app.py.\n\nDetails: {e}"
-        )
+        st.error(f"Could not load '{MODEL_PATH}'. Details: {e}")
         st.stop()
 
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
